@@ -1,0 +1,49 @@
+# Example configuration for an ESP32-DevKitC V4
+substitutions:
+  node_name: aqi-monitor-devkit
+  i2c_pin_scl: GPIO21
+  i2c_pin_sda: GPIO22
+  bme280_i2c_address: "0x76"
+  bme280_update_interval: 60s
+  bme280_offset_temperature: "-1"
+  mhz19b_pin_tx: GPIO35
+  mhz19b_pin_rx: GPIO32
+  mhz19b_update_interval: 60s
+  mhz19b_calibration_interval: 30d
+  sds011_pin_tx: GPIO34
+  sds011_pin_rx: GPIO33
+  sds011_update_interval: 5min
+  led_pin_red: GPIO5
+  led_pin_green: GPIO17
+  led_pin_blue: GPIO16
+
+# See https://github.com/esphome/feature-requests/issues/609
+esphome:
+  platformio_options:
+    platform: espressif32@3.5.0
+    board: az-delivery-devkit-v4
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+dashboard_import:
+  package_import_url: github://koenvervloesem/ESPHome-Air-Quality-Monitor/esphome-air-quality-monitor-esp32.yaml@main
+
+# Sets up Bluetooth LE to allow the user
+# to provision Wi-Fi credentials to the device.
+# TODO: Disable this for now, as it results in Wi-Fi not being set up.
+# Error: "create wifi task: failed to create task"
+#esp32_improv:
+#  authorizer: none
+
+packages:
+  base: !include common/base.yaml
+  bme280: !include common/bme280.yaml
+  mhz19b: !include common/mh-z19b.yaml
+  sds011: !include common/sds011.yaml
+  rgb: !include common/rgb_led/esp32.yaml
+  show_calibration: !include common/rgb_led/calibration.yaml
+  show_aqi: !include common/rgb_led/aqi.yaml
+  aqi: !include common/aqi.yaml
