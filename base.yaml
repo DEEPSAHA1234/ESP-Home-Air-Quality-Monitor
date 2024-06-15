@@ -1,0 +1,47 @@
+# Base configuration for all air quality monitor nodes
+
+# These are the AQI threshold values and messages. Adapt to your needs.
+substitutions:
+  aqi_co2_max_good: "800"
+  aqi_co2_max_acceptable: "1200"
+  aqi_pm2_5_avg_24h_max_good: "12"
+  aqi_pm2_5_avg_24h_max_acceptable: "25"  # WHO 2006
+  aqi_pm10_avg_24h_max_good: "25"
+  aqi_pm10_avg_24h_max_acceptable: "50"  # WHO 2006
+  aqi_message_bad: "Bad"
+  aqi_message_acceptable: "Acceptable"
+  aqi_message_good: "Good"
+
+esphome:
+  name: ${node_name}
+  # Automatically add the mac address to the name
+  # so you can use a single firmware for all devices
+  name_add_mac_suffix: true
+
+  # This will allow for (future) project identification,
+  # configuration and updates.
+  project:
+    name: koenvervloesem.air-quality-monitor
+    version: "1.0"
+
+# To be able to get logs from the device via serial and api.
+logger:
+
+# API is a requirement of the dashboard import.
+api:
+
+# OTA is required for Over-the-Air updating
+ota:
+
+wifi:
+  # Set up a Wi-Fi access point using the device name above
+  ap:
+    password: "12345678"
+
+# In combination with the `ap` this allows the user
+# to provision Wi-Fi credentials to the device.
+captive_portal:
+
+# Sets up the improv via serial client for Wi-Fi provisioning.
+# Handy if your device has a usb port for the user to add credentials when they first get it.
+improv_serial:
