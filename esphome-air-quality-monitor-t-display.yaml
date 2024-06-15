@@ -1,0 +1,119 @@
+# Example configuration for a TTGO T-Display ESP32
+substitutions:
+  node_name: aqi-monitor-tdisplay
+  i2c_pin_scl: GPIO21
+  i2c_pin_sda: GPIO22
+  bme280_i2c_address: "0x76"
+  bme280_update_interval: 60s
+  bme280_offset_temperature: "-1"
+  t6615_pin_tx: GPIO39
+  t6615_pin_rx: GPIO32
+  t6615_update_interval: 60s
+  sds011_pin_tx: GPIO25
+  sds011_pin_rx: GPIO33
+  sds011_update_interval: 5min
+  graph_width: "240"
+  graph_height: "75"
+
+esphome:
+  includes:
+    - include/display_utilities.h
+
+esp32:
+  board: featheresp32
+  framework:
+    type: arduino
+
+# Sets up Bluetooth LE to allow the user
+# to provision Wi-Fi credentials to the device.
+# TODO: Disable this for now, as it results in Wi-Fi not being set up.
+# Error: "create wifi task: failed to create task"
+#esp32_improv:
+#  authorizer: none
+
+dashboard_import:
+  package_import_url: github://koenvervloesem/ESPHome-Air-Quality-Monitor/esphome-air-quality-monitor-t-display.yaml@main
+
+packages:
+  base: !include common/base.yaml
+  bme280: !include common/bme280.yaml
+  t6615: !include common/t6615.yaml
+  sds011: !include common/sds011.yaml
+  aqi: !include common/aqi.yaml
+  no_aqi: !include common/no_feedback/aqi.yaml
+  no_calibration: !include common/no_feedback/calibration.yaml
+  display: !include common/display.yaml
+
+binary_sensor:
+  - platform: status
+    id: system_status
+  - platform: gpio
+    id: button1
+    pin:
+      number: GPIO35
+      inverted: true
+    on_click:
+      - min_length: 50ms
+        max_length: 350ms
+        then:
+          - display.page.show_next: ttgo_tdisplay
+          - component.update: ttgo_tdisplay
+      - min_length: 500ms
+        max_length: 1000ms
+        then:
+          - switch.toggle: backlight
+#  - platform: gpio
+#    id: button2
+#    pin:
+#      number: GPIO0
+#      inverted: true
+#      mode: INPUT_PULLUP
+#    on_click:
+#      then:
+#        - switch.turn_on: co2_calibrate
+
+switch:
+  - platform: gpio
+    pin: GPIO4
+    name: "${node_name} backlight"
+    id: backlight
+
+# This is the 'internal' SPI bus for the T-Display's display
+spi:
+  clk_pin: GPIO18
+  mosi_pin: GPIO19
+
+# yamllint disable rule:line-length
+display:
+  - platform: st7789v
+    model: TTGO TDisplay 135x240
+    id: ttgo_tdisplay
+    backlight_pin: GPIO4
+    cs_pin: GPIO5
+    dc_pin: GPIO16
+    reset_pin: GPIO23
+    rotation: 270
+    pages:
+      - id: page1
+        lambda: |-
+          drawHeader(it, id(color_blue));
+          //showCalibration(it, id(roboto_12), id(color_yellow), id(color_red), id(co2_calibrate), id(co2_calibrated));
+          showStatus(it, id(roboto_12), id(color_green), id(color_red), id(system_status));
+          it.printf((240 / 2), (110 / 3) * 1 + 5, id(roboto_24), id(color_gray), TextAlign::CENTER, "CO2: %.0f ppm", id(co2_value).state);
+          it.graph(0, 60, id(co2_graph));
+      - id: page2
+        lambda: |-
+          drawHeader(it, id(color_blue));
+          //showCalibration(it, id(roboto_12), id(color_yellow), id(color_red), id(co2_calibrate), id(co2_calibrated));
+          showStatus(it, id(roboto_12), id(color_green), id(color_red), id(system_status));
+          it.printf((240 / 2), (110 / 3) * 1 + 5, id(roboto_24), id(color_gray), TextAlign::CENTER, "t:  %.1f °C", id(t_value).state);
+          it.printf((240 / 2), (110 / 3) * 2 + 5, id(roboto_24), id(color_gray), TextAlign::CENTER, "RH: %.1f %%", id(h_value).state);
+          it.printf((240 / 2), (110 / 3) * 3 + 5, id(roboto_24), id(color_gray), TextAlign::CENTER, "p: %.0f hPa", id(p_value).state);
+      - id: page3
+        lambda: |-
+          drawHeader(it, id(color_blue));
+          //showCalibration(it, id(roboto_12), id(color_yellow), id(color_red), id(co2_calibrate), id(co2_calibrated));
+          showStatus(it, id(roboto_12), id(color_green), id(color_red), id(system_status));
+          it.printf(5, 25, id(roboto_24), id(color_yellow), TextAlign::TOP_LEFT, "%.0f µg/m³", id(pm2_5_value).state);
+          it.printf(235, 25, id(roboto_24), id(color_green), TextAlign::TOP_RIGHT, "%.0f µg/m³", id(pm10_value).state);
+          it.graph(0, 60, id(pm_graph));
